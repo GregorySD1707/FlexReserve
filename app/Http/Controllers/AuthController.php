@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
 {
-    // Mostrar formulario de inicio de sesión
+    // Mostrar formulario de registro
     public function mostrarVistaRegistro()
     {
         return view('VistaRegistro');
@@ -15,38 +19,60 @@ class AuthController extends Controller
     // Procesar registro
     public function registrar(Request $request)
     {
-        /*
         // Validar datos
         $request->validate([
             'nombre' => 'required|string|max:100',
-            'apellido' => 'required|string|max:100',
-            'correo' => 'required|correo|unique:users,correo',
-            'contraseña' => 'required|min:8',
-            'fechaDeNacimiento' => 'required|date',
-            'rol' => 'required|in:cliente,proveedor',
+            'username' => 'required|string|max:100|unique:users,username',
+            'correo' => 'required|email|unique:users,email',
+            'contraseña' => [
+                'required',
+                Password::min(8)
+                    ->letters()
+                    ->mixedCase()
+                    ->numbers()
+                    ->symbols()
+            ],
+            'telefono' => 'nullable|string|max:20',
+            'direccion' => 'nullable|string|max:255',
+            'roles' => 'required|in:cliente,proveedor',
+        ], [
+            'nombre.required' => 'El nombre es obligatorio.',
+            'username.required' => 'El username es obligatorio.',
+            'username.unique' => 'El username ya está en uso.',
+            'correo.required' => 'El correo es obligatorio.',
+            'correo.email' => 'El correo debe ser una dirección válida.',
+            'correo.unique' => 'El correo ya está en uso.',
+            'contraseña.required' => 'La contraseña es obligatoria.',
+            // Mensajes unificados para reglas de seguridad: mostrar "contraseña no válida"
+            'contraseña.min' => 'contraseña no válida',
+            'contraseña.letters' => 'contraseña no válida',
+            'contraseña.mixedCase' => 'contraseña no válida',
+            'contraseña.numbers' => 'contraseña no válida',
+            'contraseña.symbols' => 'contraseña no válida',
+            'roles.required' => 'Debe seleccionar un rol.',
+            'roles.in' => 'El rol seleccionado no es válido.',
         ]);
 
-        // INTERACCION CON LA BASE DE DATOS
-        // 1. Crear el usuario en la tabla usuario
+        // Crear el usuario
         $user = User::create([
-            'nombre' => $request->nombre,
-            'apellido' => $request->apellido,
-            'correo' => $request->correo,
-            'contraseña' => bcrypt($request->contraseña),
-            'fecha_de_nacimiento' => $request->fechaDeNacimiento,
+            'name' => $request->nombre,
+            'username' => $request->username,
+            'email' => $request->correo,
+            'password' => Hash::make($request->contraseña),
+            'telefono' => $request->telefono,
+            'direccion' => $request->direccion,
         ]);
 
-        // 2. asignar el rol en tabla user_has_roles
+        // Asignar rol
+        $user->assignRole($request->roles);
 
-        // 3. crear registro en cliente o proveedor
-
-        // iniciar sesión automáticamente
+        // Iniciar sesión automáticamente
         Auth::login($user);
-        */
-        return redirect()->route('index');
+
+        return redirect()->route('index')->with('success', 'Registro exitoso. Bienvenido a FlexReserve.');
     }
 
-    // Motrar formulario inicio de sesión
+    // Mostrar formulario inicio de sesión
     public function mostrarVistaInicioSesion()
     {
         return view('VistaInicioSesion');
@@ -54,38 +80,48 @@ class AuthController extends Controller
 
     public function iniciarSesion(Request $request)
     {
-        /*
         $request->validate([
-            'correo' => 'required|correo',
+            'correo' => 'required|email',
             'contraseña' => 'required',
+            'roles' => 'required|in:cliente,proveedor',
+        ], [
+            'correo.required' => 'El correo es obligatorio.',
+            'correo.email' => 'El correo debe ser una dirección válida.',
+            'contraseña.required' => 'La contraseña es obligatoria.',
+            'roles.required' => 'Debe seleccionar un rol al iniciar sesión.',
+            'roles.in' => 'El rol seleccionado no es válido.',
         ]);
 
-        // Verificar en BD
-        // buscar usuari por correo y verificar contraseña
-        if (Auth::attempt(['correo' => $request->correo, 'contraseña' => $request->contraseña])) {
-            // Autenticación exitosa
-            $request->session()->regenerate();
-            return redirect()->route('index');
+        // Intentar autenticación
+        if (Auth::attempt(['email' => $request->correo, 'password' => $request->contraseña])) {
+            // Verificar que el usuario autenticado tenga el rol solicitado
+            $user = Auth::user();
+            if ($user->hasRole($request->roles)) {
+                // Autenticación y rol correctos
+                $request->session()->regenerate();
+                return redirect()->route('index');
+            }
+
+            // Rol no coincide: cerrar sesión y devolver error
+            Auth::logout();
+            return back()->withErrors([
+                'roles' => 'El rol proporcionado no coincide con la cuenta.',
+            ])->onlyInput('correo');
         }
 
         return back()->withErrors([
             'correo' => 'Las credenciales proporcionadas no son correctas.',
         ])->onlyInput('correo');
-        */
-        return redirect()->route('index');
     }
 
     // Cerrar sesión
     public function cerrarSesion(Request $request)
     {
-        /*
         Auth::logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('VistaInicioSesion');
-        */
         return redirect()->route('iniciarSesion');
     }
 

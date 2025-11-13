@@ -20,27 +20,29 @@
     @endif
 
     <form action="{{ route('registrar.submit') }}" method="POST">
-
         @csrf
         <label for="nombre">Nombre: </label>
         <input type="text" name="nombre" id="nombre" value="{{ old('nombre') }}"> <br>
         <br>
-        <label for="apellido">Apellido: </label>
-        <input type="text" name="apellido" id="apellido" value="{{ old('apellido') }}"> <br>
+        <label for="username">Username: </label>
+        <input type="text" name="username" id="username" value="{{ old('username') }}"> <br>
         <br>
-        <label for="email">Correo: </label>
+        <label for="correo">Correo: </label>
         <input type="email" name="correo" id="correo" value="{{ old('correo') }}"> <br>
         <br>
         <label for="contraseña">Contraseña: </label>
         <input type="password" name="contraseña" id="contraseña"> <br>
         <br>
-        <label for="FechaDeNacimiento">Fecha de Nacimiento:</label>
-        <input type="date" name="fechaDeNacimiento" id="fechaDeNacimiento"> <br>
+        <label for="telefono">Teléfono: </label>
+        <input type="text" name="telefono" id="telefono" value="{{ old('telefono') }}"> <br>
         <br>
-        <label for="rol">Rol: </label>
+        <label for="direccion">Dirección: </label>
+        <input type="text" name="direccion" id="direccion" value="{{ old('direccion') }}"> <br>
+        <br>
+        <label for="roles">Rol: </label>
         <select name="roles" id="roles">
-            <option value="cliente">Cliente</option>
-            <option value="proveedor">Proveedor</option>
+            <option value="cliente" {{ old('roles') == 'cliente' ? 'selected' : '' }}>Cliente</option>
+            <option value="proveedor" {{ old('roles') == 'proveedor' ? 'selected' : '' }}>Proveedor</option>
         </select> <br>
         <br>
         <input type="submit" value="Registrarse">

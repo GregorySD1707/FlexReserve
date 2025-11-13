@@ -28,6 +28,12 @@
         <label for="contraseña">Contraseña: </label>
         <input type="password" name="contraseña" id="contraseña"> <br>
         <br>
+        <label for="roles">Rol: </label>
+        <select name="roles" id="roles">
+            <option value="cliente" {{ old('roles') == 'cliente' ? 'selected' : '' }}>Cliente</option>
+            <option value="proveedor" {{ old('roles') == 'proveedor' ? 'selected' : '' }}>Proveedor</option>
+        </select> <br>
+        <br>
         <input type="submit" value="Iniciar Sesión">
     </form>
 

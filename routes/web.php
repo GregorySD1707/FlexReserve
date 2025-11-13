@@ -15,20 +15,13 @@ Route::post('/register', [AuthController::class, 'registrar'])->name('registrar.
 Route::get('/login', [AuthController::class, 'mostrarVistaInicioSesion'])->name('iniciarSesion');
 Route::post('/login', [AuthController::class, 'iniciarSesion'])->name('iniciarSesion.submit');
 
-/*
-// Rutas protegidas (Rquieren autenticación)
 Route::middleware('auth')->group(function () {
-    Route::get('/', function () {
+    Route::get('/index', function () {
         return view('index');
     })->name('index');
 
     Route::post('/logout', [AuthController::class, 'cerrarSesion'])->name('logout');
 });
-*/
-
-Route::get('/index', function () {
-    return view('index');
-})->name('index');
 
 // Ruta de logout
 Route::post('/logout', [AuthController::class, 'cerrarSesion'])->name('logout');
