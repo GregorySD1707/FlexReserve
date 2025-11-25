@@ -18,6 +18,18 @@
     <p>Bienvenido, {{ Auth::user()->name }}!</p>
     <p>Tu rol: {{ Auth::user()->getRoleNames()->first() }}</p>
 
+    @if(Auth::check() && Auth::user()->getRoleNames()->first() === 'proveedor')
+        <div>
+            <h3>Panel de Proveedor</h3>
+            @if(Route::has('MiDisponibilidad'))
+                <a href="{{ route('MiDisponibilidad.mostrar') }}">Mi Disponibilidad</a>
+            @else
+                <a href="/MiDisponibilidad">Mi Disponibilidad</a>
+            @endif
+        </div>
+    @endif
+
+
     <form action="{{ route('logout') }}" method="POST">
         @csrf
         <button type="submit">Cerrar Sesión</button>
