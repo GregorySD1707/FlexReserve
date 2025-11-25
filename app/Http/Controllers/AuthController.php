@@ -22,7 +22,6 @@ class AuthController extends Controller
         // Validar datos
         $request->validate([
             'nombre' => 'required|string|max:100',
-            'username' => 'required|string|max:100|unique:users,username',
             'correo' => 'required|email|unique:users,email',
             'contraseña' => [
                 'required',
@@ -32,13 +31,15 @@ class AuthController extends Controller
                     ->numbers()
                     ->symbols()
             ],
+            'nombre_empresa' => 'prohibited',
+            'descripcion_proveedor' => 'required_if:roles,proveedor|string|max:1000',
+            'fecha_nacimiento' => 'nullable|date',
             'telefono' => 'nullable|string|max:20',
             'direccion' => 'nullable|string|max:255',
             'roles' => 'required|in:cliente,proveedor',
         ], [
             'nombre.required' => 'El nombre es obligatorio.',
-            'username.required' => 'El username es obligatorio.',
-            'username.unique' => 'El username ya está en uso.',
+            // username removed; email is unique identifier
             'correo.required' => 'El correo es obligatorio.',
             'correo.email' => 'El correo debe ser una dirección válida.',
             'correo.unique' => 'El correo ya está en uso.',
@@ -53,10 +54,9 @@ class AuthController extends Controller
             'roles.in' => 'El rol seleccionado no es válido.',
         ]);
 
-        // Crear el usuario
+        // Crear el usuario (sin username)
         $user = User::create([
             'name' => $request->nombre,
-            'username' => $request->username,
             'email' => $request->correo,
             'password' => Hash::make($request->contraseña),
             'telefono' => $request->telefono,
@@ -65,6 +65,21 @@ class AuthController extends Controller
 
         // Asignar rol
         $user->assignRole($request->roles);
+
+        // Crear registros adicionales según rol (usando modelos en inglés y atributos en inglés)
+        if ($request->roles === 'proveedor') {
+            \App\Models\Provider::create([
+                'user_id' => $user->id,
+                'description' => $request->descripcion_proveedor,
+            ]);
+        }
+
+        if ($request->roles === 'cliente') {
+            \App\Models\Client::create([
+                'user_id' => $user->id,
+                'birth_date' => $request->fecha_nacimiento ?? null,
+            ]);
+        }
 
         // Iniciar sesión automáticamente
         Auth::login($user);
