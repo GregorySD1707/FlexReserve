@@ -22,10 +22,10 @@
     <form action="{{ route('iniciarSesion.submit') }}" method="POST">
 
         @csrf
-        <label for="email">Correo: </label>
+        <label for="email">Correo*: </label>
         <input type="email" name="correo" id="correo" value="{{ old('correo') }}"> <br>
         <br>
-        <label for="contraseña">Contraseña: </label>
+        <label for="contraseña">Contraseña*: </label>
         <input type="password" name="contraseña" id="contraseña"> <br>
         <br>
         <label for="roles">Rol: </label>
