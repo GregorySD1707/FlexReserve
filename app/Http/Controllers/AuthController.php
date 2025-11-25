@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
@@ -19,8 +20,8 @@ class AuthController extends Controller
     // Procesar registro
     public function registrar(Request $request)
     {
-        // Validar datos
-        $request->validate([
+        // Validar datos usando Validator para poder controlar mensajes cuando faltan campos obligatorios
+        $validator = Validator::make($request->all(), [
             'nombre' => 'required|string|max:100',
             'correo' => 'required|email|unique:users,email',
             'contraseña' => [
@@ -39,12 +40,10 @@ class AuthController extends Controller
             'roles' => 'required|in:cliente,proveedor',
         ], [
             'nombre.required' => 'El nombre es obligatorio.',
-            // username removed; email is unique identifier
             'correo.required' => 'El correo es obligatorio.',
             'correo.email' => 'El correo debe ser una dirección válida.',
             'correo.unique' => 'El correo ya está en uso.',
             'contraseña.required' => 'La contraseña es obligatoria.',
-            // Mensajes unificados para reglas de seguridad: mostrar "contraseña no válida"
             'contraseña.min' => 'contraseña no válida',
             'contraseña.letters' => 'contraseña no válida',
             'contraseña.mixedCase' => 'contraseña no válida',
@@ -54,6 +53,29 @@ class AuthController extends Controller
             'fecha_nacimiento.required_if' => 'La fecha de nacimiento es obligatoria para clientes.',
             'roles.in' => 'El rol seleccionado no es válido.',
         ]);
+
+        if ($validator->fails()) {
+            // Detectar si alguna regla fallida es de tipo Required/RequiredIf/... para mostrar un mensaje genérico
+            $failed = $validator->failed();
+            $requiredRules = [
+                'Required', 'RequiredIf', 'RequiredWith', 'RequiredWithAll', 'RequiredWithout', 'RequiredWithoutAll'
+            ];
+            $missingRequired = false;
+            foreach ($failed as $field => $rules) {
+                foreach ($rules as $ruleName => $params) {
+                    if (in_array($ruleName, $requiredRules, true)) {
+                        $missingRequired = true;
+                        break 2;
+                    }
+                }
+            }
+
+            if ($missingRequired) {
+                return back()->withErrors(['form' => 'Todos los campos obligatorios deben ser completados.'])->withInput();
+            }
+
+            return back()->withErrors($validator)->withInput();
+        }
 
         // Crear el usuario (sin username)
         $user = User::create([
