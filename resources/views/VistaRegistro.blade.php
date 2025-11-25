@@ -38,8 +38,8 @@
         <input type="text" name="direccion" id="direccion" value="{{ old('direccion') }}"> <br>
         <br>
         <div id="proveedor_fields" style="display: none;">
-            <label for="descripcion_proveedor">Descripción (obligatoria): </label>
-            <textarea name="descripcion_proveedor" id="descripcion_proveedor" required>{{ old('descripcion_proveedor') }}</textarea>
+            <label for="descripcion_proveedor">Descripción*: </label>
+                <textarea name="descripcion_proveedor" id="descripcion_proveedor">{{ old('descripcion_proveedor') }}</textarea>
             <br><br>
         </div>
 
@@ -77,8 +77,31 @@
         }
 
         rolesSelect.addEventListener('change', toggleFields);
-        // inicializar según valor actual
-        toggleFields();
+        // inicializar según valor actual y asegurar que campos ocultos estén deshabilitados
+        function init() {
+            toggleFields();
+            // si proveedor está oculto, deshabilitar su textarea para evitar validación del navegador
+            document.getElementById('descripcion_proveedor').disabled = (rolesSelect.value !== 'proveedor');
+        }
+
+        function toggleFields() {
+            const val = rolesSelect.value;
+            if (val === 'proveedor') {
+                proveedorFields.style.display = 'block';
+                clienteFields.style.display = 'none';
+                document.getElementById('descripcion_proveedor').disabled = false;
+            } else if (val === 'cliente') {
+                proveedorFields.style.display = 'none';
+                clienteFields.style.display = 'block';
+                document.getElementById('descripcion_proveedor').disabled = true;
+            } else {
+                proveedorFields.style.display = 'none';
+                clienteFields.style.display = 'none';
+                document.getElementById('descripcion_proveedor').disabled = true;
+            }
+        }
+
+        init();
     </script>
 
     <a href="{{ route('iniciarSesion') }}">Inicia sesión</a>
