@@ -86,18 +86,28 @@
 
         function toggleFields() {
             const val = rolesSelect.value;
+            const desc = document.getElementById('descripcion_proveedor');
+            const birth = document.getElementById('fecha_nacimiento');
             if (val === 'proveedor') {
                 proveedorFields.style.display = 'block';
                 clienteFields.style.display = 'none';
-                document.getElementById('descripcion_proveedor').disabled = false;
+                desc.disabled = false;
+                // customer birth should be disabled and not required
+                birth.disabled = true;
+                birth.required = false;
             } else if (val === 'cliente') {
                 proveedorFields.style.display = 'none';
                 clienteFields.style.display = 'block';
-                document.getElementById('descripcion_proveedor').disabled = true;
+                desc.disabled = true;
+                // make birth required for client
+                birth.disabled = false;
+                birth.required = true;
             } else {
                 proveedorFields.style.display = 'none';
                 clienteFields.style.display = 'none';
-                document.getElementById('descripcion_proveedor').disabled = true;
+                desc.disabled = true;
+                birth.disabled = true;
+                birth.required = false;
             }
         }
 

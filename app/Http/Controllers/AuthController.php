@@ -33,7 +33,7 @@ class AuthController extends Controller
             ],
             'nombre_empresa' => 'prohibited',
             'descripcion_proveedor' => 'required_if:roles,proveedor|string|max:1000',
-            'fecha_nacimiento' => 'nullable|date',
+            'fecha_nacimiento' => 'required_if:roles,cliente|date',
             'telefono' => 'nullable|string|max:20',
             'direccion' => 'nullable|string|max:255',
             'roles' => 'required|in:cliente,proveedor',
@@ -51,6 +51,7 @@ class AuthController extends Controller
             'contraseña.numbers' => 'contraseña no válida',
             'contraseña.symbols' => 'contraseña no válida',
             'roles.required' => 'Debe seleccionar un rol.',
+            'fecha_nacimiento.required_if' => 'La fecha de nacimiento es obligatoria para clientes.',
             'roles.in' => 'El rol seleccionado no es válido.',
         ]);
 
