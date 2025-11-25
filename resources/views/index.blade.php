@@ -22,9 +22,9 @@
         <div>
             <h3>Panel de Proveedor</h3>
             @if(Route::has('MiDisponibilidad'))
-                <a href="{{ route('MiDisponibilidad') }}">Mi Disponibilidad</a>
+                <a href="{{ route('MiDisponibilidad.mostrar') }}">Mi Disponibilidad</a>
             @else
-                <a href="/Midisponibilidad">Mi Disponibilidad</a>
+                <a href="/MiDisponibilidad">Mi Disponibilidad</a>
             @endif
         </div>
     @endif

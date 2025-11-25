@@ -5,58 +5,67 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Disponibilidad;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Provider;
 
 class DisponibilidadController extends Controller
 {
     // Mostrar vista con disponibilidades existentes
     public function mostrarDisponibilidad()
     {
+        if (!Auth::user()->hasRole('proveedor')) {
+            abort(403, 'No tienes permiso para acceder a esta página.');
+        }
+
         // Obtener todas las disponibilidades del proveedor autenticado
         $disponibilidades = Disponibilidad::where('user_id', Auth::id())
-            ->orderBy('fecha')
-            ->orderBy('hora_inicio')
+            ->orderBy('date') 
+            ->orderBy('start_time')
             ->get()
-            ->groupBy('fecha');  // Agrupar por fecha
+            ->groupBy('date');  // Agrupar por fecha
         
-        return view('provider.disponibilidad', compact('disponibilidades'));
+        return view('VistaMiDisponibilidad', compact('disponibilidades'));
     }
 
     public function guardarDisponibilidad(Request $request)
     {
+        if (!Auth::user()->hasRole('proveedor')) {
+            abort(403, 'No tienes permiso para realizar esta acción.');
+        }
+
         // validación
         $informacionValidada = $request->validate([
-            'fecha' => [
+            'date' => [
                 'required',
                 'date',
                 'after_or_equal:today' // La fecha no puede ser en el pasado
             ],
-            'hora_inicio' => [
+            'start_time' => [
                 'required',
                 'date_format:H:i' // Formato de hora 24 horas
             ],
-            'hora_fin' => [
+            'end_time' => [
                 'required',
                 'date_format:H:i',
-                'after:hora_inicio' // La hora de fin debe ser después de la hora de inicio
+                'after:start_time' // La hora de fin debe ser después de la hora de inicio
             ]
         ], [
             // Mensajes de error personalizados
-            'fecha.required' => 'La fecha es obligatoria.',
-            'fecha.after_or_equal' => 'La fecha no puede ser en el pasado.',
-            'hora_inicio.required' => 'La hora de inicio es obligatoria.',
-            'hora_fin.required' => 'La hora de fin es obligatoria.',
-            'hora_fin.after' => 'La hora de fin debe ser después de la hora de inicio.'
+            'date.required' => 'La fecha es obligatoria.',
+            'date.after_or_equal' => 'La fecha no puede ser en el pasado.',
+            'start_time.required' => 'La hora de inicio es obligatoria.',
+            'end_time.required' => 'La hora de fin es obligatoria.',
+            'end_time.after' => 'La hora de fin debe ser después de la hora de inicio.'
         ]);
 
         // Verificar solapamientos
         $solapamiento = Disponibilidad::where('user_id', Auth::id())
-            ->where('fecha', $informacionValidada['fecha'])
+            ->where('date', $informacionValidada['date'])
             ->where(function ($query) use ($informacionValidada) {
-                $query->whereBetween('hora_inicio', [$informacionValidada['hora_inicio'], $informacionValidada['hora_fin']])
-                      ->orWhereBetween('hora_fin', [$informacionValidada['hora_inicio'], $informacionValidada['hora_fin']])
+                $query->whereBetween('start_time', [$informacionValidada['start_time'], $informacionValidada['end_time']])
+                      ->orWhereBetween('end_time', [$informacionValidada['start_time'], $informacionValidada['end_time']])
                       ->orWhere(function ($q) use ($informacionValidada) {
-                          $q->where('hora_inicio', '<=', $informacionValidada['hora_inicio'])
-                            ->where('hora_fin', '>=', $informacionValidada['hora_fin']);
+                          $q->where('start_time', '<=', $informacionValidada['start_time'])
+                            ->where('end_time', '>=', $informacionValidada['end_time']);
                       });
             })
             ->exists();
@@ -70,13 +79,13 @@ class DisponibilidadController extends Controller
         // Guardar disponibilidad
         Disponibilidad::create([
             'user_id' => Auth::id(),
-            'fecha' => $informacionValidada['fecha'],
-            'hora_inicio' => $informacionValidada['hora_inicio'],
-            'hora_fin' => $informacionValidada['hora_fin'],
+            'date' => $informacionValidada['date'],
+            'start_time' => $informacionValidada['start_time'],
+            'end_time' => $informacionValidada['end_time'],
         ]);
 
         return redirect()
-            ->route('provider.disponibilidad.mostrarDisponibilidad')
+            ->route('MiDisponibilidad.mostrar')
             ->with('success', 'Disponibilidad guardada correctamente.');
     }
 }

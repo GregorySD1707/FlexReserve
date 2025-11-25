@@ -28,7 +28,13 @@ Route::post('/logout', [AuthController::class, 'cerrarSesion'])->name('logout');
 
 // Incremento 2: Ruta para el manejo de horarios de disponibilidad del proveedor
 use App\Http\Controllers\DisponibilidadController;
-Route::middleware(['auth'])->group(function () {
-    Route::get('/provider/disponibilidad', [DisponibilidadController::class, 'mostrarDisponibilidad'])->name('MiDisponibilidad');
-    Route::post('/provider/disponibilidad', [DisponibilidadController::class, 'guardarDisponibilidad'])->name('MiDisponibilidad.guardar');
+
+Route::middleware(['auth'])->group(function () { // Protegido con middleware de autenticación
+    //Mostrar vista
+    Route::get('/MiDisponibilidad', [DisponibilidadController::class, 'mostrarDisponibilidad'])
+        ->name('MiDisponibilidad.mostrar');
+
+    // Guardar disponibilidad
+    Route::post('/MiDisponibilidad', [DisponibilidadController::class, 'guardarDisponibilidad'])
+        ->name('MiDisponibilidad.guardar');
 });
