@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
@@ -19,10 +20,9 @@ class AuthController extends Controller
     // Procesar registro
     public function registrar(Request $request)
     {
-        // Validar datos
-        $request->validate([
+        // Validar datos usando Validator para poder controlar mensajes cuando faltan campos obligatorios
+        $validator = Validator::make($request->all(), [
             'nombre' => 'required|string|max:100',
-            'username' => 'required|string|max:100|unique:users,username',
             'correo' => 'required|email|unique:users,email',
             'contraseña' => [
                 'required',
@@ -32,31 +32,54 @@ class AuthController extends Controller
                     ->numbers()
                     ->symbols()
             ],
+            'nombre_empresa' => 'prohibited',
+            'descripcion_proveedor' => 'required_if:roles,proveedor|string|max:1000',
+            'fecha_nacimiento' => 'required_if:roles,cliente|date',
             'telefono' => 'nullable|string|max:20',
             'direccion' => 'nullable|string|max:255',
             'roles' => 'required|in:cliente,proveedor',
         ], [
             'nombre.required' => 'El nombre es obligatorio.',
-            'username.required' => 'El username es obligatorio.',
-            'username.unique' => 'El username ya está en uso.',
             'correo.required' => 'El correo es obligatorio.',
             'correo.email' => 'El correo debe ser una dirección válida.',
             'correo.unique' => 'El correo ya está en uso.',
             'contraseña.required' => 'La contraseña es obligatoria.',
-            // Mensajes unificados para reglas de seguridad: mostrar "contraseña no válida"
             'contraseña.min' => 'contraseña no válida',
             'contraseña.letters' => 'contraseña no válida',
             'contraseña.mixedCase' => 'contraseña no válida',
             'contraseña.numbers' => 'contraseña no válida',
             'contraseña.symbols' => 'contraseña no válida',
             'roles.required' => 'Debe seleccionar un rol.',
+            'fecha_nacimiento.required_if' => 'La fecha de nacimiento es obligatoria para clientes.',
             'roles.in' => 'El rol seleccionado no es válido.',
         ]);
 
-        // Crear el usuario
+        if ($validator->fails()) {
+            // Detectar si alguna regla fallida es de tipo Required/RequiredIf/... para mostrar un mensaje genérico
+            $failed = $validator->failed();
+            $requiredRules = [
+                'Required', 'RequiredIf', 'RequiredWith', 'RequiredWithAll', 'RequiredWithout', 'RequiredWithoutAll'
+            ];
+            $missingRequired = false;
+            foreach ($failed as $field => $rules) {
+                foreach ($rules as $ruleName => $params) {
+                    if (in_array($ruleName, $requiredRules, true)) {
+                        $missingRequired = true;
+                        break 2;
+                    }
+                }
+            }
+
+            if ($missingRequired) {
+                return back()->withErrors(['form' => 'Todos los campos obligatorios deben ser completados.'])->withInput();
+            }
+
+            return back()->withErrors($validator)->withInput();
+        }
+
+        // Crear el usuario (sin username)
         $user = User::create([
             'name' => $request->nombre,
-            'username' => $request->username,
             'email' => $request->correo,
             'password' => Hash::make($request->contraseña),
             'telefono' => $request->telefono,
@@ -65,6 +88,21 @@ class AuthController extends Controller
 
         // Asignar rol
         $user->assignRole($request->roles);
+
+        // Crear registros adicionales según rol (usando modelos en inglés y atributos en inglés)
+        if ($request->roles === 'proveedor') {
+            \App\Models\Provider::create([
+                'user_id' => $user->id,
+                'description' => $request->descripcion_proveedor,
+            ]);
+        }
+
+        if ($request->roles === 'cliente') {
+            \App\Models\Client::create([
+                'user_id' => $user->id,
+                'birth_date' => $request->fecha_nacimiento ?? null,
+            ]);
+        }
 
         // Iniciar sesión automáticamente
         Auth::login($user);
