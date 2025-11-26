@@ -22,10 +22,10 @@
     @if(Auth::check() && Auth::user()->getRoleNames()->first() === 'proveedor')
         <div>
             <h3>Panel de Proveedor</h3>
-            @if(Route::has('MiDisponibilidad'))
+            @if(Route::has('MiDisponibilidad.mostrar'))
                 <a href="{{ route('MiDisponibilidad.mostrar') }}">Mi Disponibilidad</a>
             @else
-                <a href="/MiDisponibilidad">Mi Disponibilidad</a>
+                <a href="{{ url('/MiDisponibilidad') }}">Mi Disponibilidad</a>
             @endif
         </div>
     @endif
